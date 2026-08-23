@@ -2,11 +2,11 @@
 
 | Nom | Type | Description | Contraintes / Remarques |
 |---|---|---|---|---|
-| id_personne | Identifiant | Numéro unique de la personne | Nécessaire pour savoir si elle revient plusieurs fois dans l'année |
+| id_personne | Texte | Numéro unique de la personne | Nécessaire pour savoir si elle revient plusieurs fois dans l'année |
 | nom_personne | Texte | Nom de la personne | |
 | telephone_personne | Nombre | Numéro de téléphone | |
 | personne_adherent | Booléen | Adhérent ou non | Impacte le prix payé en boutique |
-| id_depot | Identifiant | Numéro du dépôt | |
+| id_depot | Texte | Numéro du dépôt | |
 | date-depot | Date | Date du dépôt | |
 | mode-depot | énum | "dépôt en boutique" ou "collecte à domicile" | |
 | id_deposant | Texte | Personne à l'origine du dépôt | Renvoie à PERSONNE |
@@ -15,7 +15,7 @@
 | categorie_objet | Texte | mobilier / électroménager / livres / vaisselle / textile / jouets / bricolage | |
 | etat_arrivee | énum | bon état / à réparer / hors service | |
 | poids_objet | Nombre | Poids pesé individuellement en kg | Donnée demandée par la mairie |
-| statut_parcours | énum | arrivé / trié / en réparation / en rayon / vendu / sorti | Doit être connu à tout moment ; "sorti" si non vendu après 6 mois |
+| statut_parcours | énum | arrivé / en réparation / en rayon / vendu / sorti | Doit être connu à tout moment ; "sorti" si non vendu après 6 mois |
 | objet_depot | énum | Dépôt d'origine | Renvoie à DEPOT |
 | id_reparation | Nombre | Numéro de la réparation | |
 | id_objet | Texte | Objet concerné | Renvoie à OBJET |
