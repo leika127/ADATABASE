@@ -1,11 +1,10 @@
-// index.js
+import express from 'express';
+import swaggerUi from 'swagger-ui-express';
+import { readFileSync } from 'fs';
 
-const express = require('express');
-const swaggerUi = require('swagger-ui-express');
-const swaggerDocument = require('./swagger.json');
+const swaggerDocument = JSON.parse(readFileSync('./swagger.json', 'utf8'));
 
 const app = express();
-app.use('/objets', require('./routes/objets'));
 app.use(express.json());
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
