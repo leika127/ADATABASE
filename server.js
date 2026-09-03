@@ -2,6 +2,8 @@ import express from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { readFileSync } from 'fs';
 import router from './route.js';
+import pool from './db.js';
+import 'dotenv/config';
 
 const swaggerDocument = JSON.parse(readFileSync('./swagger.json', 'utf8'));
 
