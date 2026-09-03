@@ -1,5 +1,5 @@
 // config/db.js
-const { Pool } = require('pg');
+import { Pool } from 'pg';
 
 const pool = new Pool({
   host: 'localhost',
@@ -9,4 +9,4 @@ const pool = new Pool({
   database: 'la_remise',
 });
 
-module.exports = pool;
+export default pool;

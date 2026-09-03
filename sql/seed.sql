@@ -34,7 +34,7 @@ INSERT INTO competence (libelle) VALUES
   ('Peinture');
 
 -- 22 personnes — donatrices, achetées et inscrites aux ateliers
-INSERT INTO personne (nom, prenom, phone, adherente) VALUES
+INSERT INTO personne (nom, prenom, telephone, adherente) VALUES
   ('Bernard', 'Malika', '0648911302', true),
   ('Dubois', 'Camille', '0619820725', false),
   ('Moreau', 'Sofia', '0668105556', false),
