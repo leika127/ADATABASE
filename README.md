@@ -18,6 +18,7 @@ l'écoute du port du serveur
 - un fichier route qui servira de fichier principal des requêtes 
 inscrite dans le dossier route
 - le dossier route avec 5 fichiers requêtes qui renvoient à la route principale
+- un fichier docker qui va contacter postgresql pour récupérer les bases de données
 
 ## La gestion des imprévus.
  il a fallu gérer plusieurs problèmes:
