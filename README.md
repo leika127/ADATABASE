@@ -1,5 +1,5 @@
 ## Adapi est la suite du projet adatabase. 
-le contexte est une resourcerie. 
+le contexte est une recyclerie. 
 Nous avons créé une base de données (adatabase)
 Le projet Adapi va servir de serveur à cette base de données afin de pouvoir communiquer avec elle.
 On va tester que le serveur communique bien avec la base de donnée afin de retransmettre les données au client .
