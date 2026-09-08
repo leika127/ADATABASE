@@ -3,10 +3,20 @@ import pool from '../db.js';
 
 const router = express.Router();
 
-// GET /objets — liste tous les objets
+// GET /objets — liste des objets, avec filtres optionnels statut et categorie_id
 router.get('/', async (req, res) => {
+  const { statut, categorie_id } = req.query;
+
   try {
-    const result = await pool.query('SELECT * FROM objet ORDER BY id');
+    const result = await pool.query(
+      `SELECT o.id, o.libelle, o.statut, o.prix, c.libelle AS categorie
+       FROM objet o
+       JOIN categorie c ON c.id = o.categorie_id
+       WHERE o.statut       = COALESCE($1::statut_objet, o.statut)
+         AND o.categorie_id = COALESCE($2::integer,      o.categorie_id)
+       ORDER BY o.id`,
+      [statut || null, categorie_id || null]
+    );
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -14,10 +24,21 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /objets/:id — récupère un seul objet
+// GET /objets/:id — un objet, sa catégorie, son dépôt et sa donatrice
 router.get('/:id', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM objet WHERE id = $1', [req.params.id]);
+    const result = await pool.query(
+      `SELECT o.id, o.libelle, o.poids_kg, o.etat_arrivee, o.statut, o.prix,
+              c.libelle AS categorie,
+              d.id AS depot_id, d.date_depot,
+              p.nom AS nom_donatrice, p.prenom AS prenom_donatrice
+       FROM objet o
+       JOIN categorie c ON c.id = o.categorie_id
+       JOIN depot d ON d.id = o.depot_id
+       JOIN personne p ON p.id = d.personne_id
+       WHERE o.id = $1`,
+      [req.params.id]
+    );
     if (result.rows.length === 0) {
       return res.status(404).json({ erreur: 'Objet introuvable' });
     }
@@ -28,61 +49,27 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /objets — crée un objet
-router.post('/', async (req, res) => {
-  const { libelle, poids_kg, etat_arrivee, categorie_id, depot_id } = req.body;
+// PATCH /objets/:id/statut — fait évoluer le statut d'un objet
+router.patch('/:id/statut', async (req, res) => {
+  const { statut, prix } = req.body;
 
-  if (!libelle || !poids_kg || !etat_arrivee || !categorie_id || !depot_id) {
-    return res.status(400).json({
-      erreur: 'libelle, poids_kg, etat_arrivee, categorie_id et depot_id sont requis',
-    });
+  const statutsValides = ['arrive', 'en_reparation', 'en_rayon', 'vendu', 'recycle'];
+  if (!statut || !statutsValides.includes(statut)) {
+    return res.status(400).json({ erreur: 'statut invalide ou manquant' });
   }
-
-  try {
-    const result = await pool.query(
-      `INSERT INTO objet (libelle, poids_kg, etat_arrivee, categorie_id, depot_id)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
-      [libelle, poids_kg, etat_arrivee, categorie_id, depot_id]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ erreur: 'Erreur serveur' });
-  }
-});
-
-// PUT /objets/:id — modifie un objet existant
-router.put('/:id', async (req, res) => {
-  const { libelle, poids_kg, etat_arrivee, statut, prix, date_mise_rayon } = req.body;
 
   try {
     const result = await pool.query(
       `UPDATE objet
-       SET libelle = $1, poids_kg = $2, etat_arrivee = $3,
-           statut = $4, prix = $5, date_mise_rayon = $6
-       WHERE id = $7
+       SET statut = $1, prix = COALESCE($2, prix)
+       WHERE id = $3
        RETURNING *`,
-      [libelle, poids_kg, etat_arrivee, statut, prix, date_mise_rayon, req.params.id]
+      [statut, prix || null, req.params.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ erreur: 'Objet introuvable' });
     }
     res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ erreur: 'Erreur serveur' });
-  }
-});
-
-// DELETE /objets/:id — supprime un objet
-router.delete('/:id', async (req, res) => {
-  try {
-    const result = await pool.query('DELETE FROM objet WHERE id = $1 RETURNING *', [req.params.id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ erreur: 'Objet introuvable' });
-    }
-    res.status(204).send();
   } catch (err) {
     console.error(err);
     res.status(500).json({ erreur: 'Erreur serveur' });

@@ -1,85 +1,30 @@
-# La Remise — Base de données
+## Adapi est la suite du projet adatabase. 
+le contexte est une recyclerie. 
+Nous avons créé une base de données (adatabase)
+Le projet Adapi va servir de serveur à cette base de données afin de pouvoir communiquer avec elle.
+On va tester que le serveur communique bien avec la base de donnée afin de retransmettre les données au client .
 
-Conception et implémentation de la base de données pour **La Remise**, une
-ressourcerie associative. Ce dépôt est le socle du projet fullstack
+## Mon projet se base sur l'architecture suivante:
+- un dossier conception dans lequel nous avons créé
+un schema ea, un arbre de dépendances, un schema-relation, un dictionnaire
+ce dossier etait utile pour la conception de la base de données
+- le fichier .env ( caché permettant l'enregistrement des données 
+sensibles telles que ID, MP nom de la base de données et le 
+port utilisé)
+- un dossier db: contenant les migrations (lancement docker)
+ainsi que le fichier seed pour récupérer la base de données)
+- le fichier server qui permet d'importer le autres fichiers et 
+l'écoute du port du serveur
+- un fichier route qui servira de fichier principal des requêtes 
+inscrite dans le dossier route
+- le dossier route avec 5 fichiers requêtes qui renvoient à la route principale
+- un fichier docker qui va contacter postgresql pour récupérer les bases de données
 
-## Initialiser la base en trois commandes
+## La gestion des imprévus.
+ il a fallu gérer plusieurs problèmes:
+- bien lancer docker et npm run dev afin de ne pas avoir d'erreur serveur (500)
+- bien penser au niveau de la gestion des routes, bien les importer sur la route principale
+- le client doit faire les bonnes demandes. si pas de réponse positive du serveur le client recevra une erreur 400
 
-Prérequis : [Docker](https://www.docker.com/) et Docker Compose installés et lancés.
-
-```bash
-docker compose up -d
-```
-
-Cette seule commande suffit : elle télécharge l'image PostgreSQL 16, crée la
-base `la_remise`, puis exécute automatiquement `migration_up.sql` (création
-des tables) et `seed.sql` (données de test) au premier démarrage.
-
-
-```
-
-Tu dois voir les lignes `CREATE TYPE`, `CREATE TABLE` puis les `INSERT`
-s'exécuter sans erreur, jusqu'à `database system is ready to accept connections`.
-
-Pour explorer les données visuellement (interface web) :
-
-```bash
-# ouvrir http://localhost:8080 dans un navigateur
-```
-
-Connexion Adminer :
-- Système : `PostgreSQL`
-- Serveur : `db`
-- Utilisateur : `laremise`
-- Mot de passe : `laremise`
-- Base de données : `la_remise`
-
-## Réinitialiser complètement la base
-
-Si tu modifies les scripts SQL et veux repartir de zéro :
-
-```bash
-docker compose down -v
-docker compose up -d
-```
-
-## Tester le cycle up → down → up
-
-```bash
-docker compose exec -T db psql -U laremise -d la_remise -f - < migration_down.sql
-docker compose exec -T db psql -U laremise -d la_remise -f - < migration_up.sql
-docker compose exec -T db psql -U laremise -d la_remise -f - < seed.sql
-```
-
-## Rejouer les requêtes métier
-
-```bash
-docker compose exec -T db psql -U laremise -d la_remise -f - < queries.sql
-```
-
-## Structure du dépôt
-
-```
-adatabase/
-  ├── README.md — comment initialiser la base en trois commandes
-  ├── docker-compose.yml
-  ├── conception/
-  │   ├── dictionnaire.md
-  │   ├── decisions.md
-  │   ├── schema-ea.png
-  │   ├── schema-relationnel.md
-  │   └── arbre-dependances.png
-  ├── migration_up.sql
-  ├── migration_down.sql
-  ├── seed.sql
-  └── queries.sql
-```
-
-## Stack technique
-
-- **Docker Compose** — orchestration de la base + Adminer
-- **Adminer** — interface web d'exploration des données (http://localhost:8080)
-
-## Problèmes rencontrés:
-
-- mise en forme 
+## Que manque t'il?
+Il manque toute la partie front-end pour un rendu plus agréable au client

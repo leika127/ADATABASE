@@ -6,7 +6,7 @@ const router = express.Router();
 // GET /depots — liste tous les dépôts
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM depots ORDER BY id');
+    const result = await pool.query('SELECT * FROM depot ORDER BY id');
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -14,36 +14,58 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /depots/:id — récupère un seul dépôt
+// GET /depots/:id — un dépôt, sa donatrice, et ses objets
 router.get('/:id', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM depots WHERE id = $1', [req.params.id]);
-    if (result.rows.length === 0) {
+    const depotResult = await pool.query(
+      `SELECT d.id, d.date_depot, d.type,
+              p.id AS personne_id, p.nom, p.prenom
+       FROM depot d
+       JOIN personne p ON p.id = d.personne_id
+       WHERE d.id = $1`,
+      [req.params.id]
+    );
+
+    if (depotResult.rows.length === 0) {
       return res.status(404).json({ erreur: 'Dépôt introuvable' });
     }
-    res.json(result.rows[0]);
+
+    const objetsResult = await pool.query(
+      'SELECT id, libelle, poids_kg, etat_arrivee, statut, prix FROM objet WHERE depot_id = $1',
+      [req.params.id]
+    );
+
+    res.json({
+      ...depotResult.rows[0],
+      objets: objetsResult.rows,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ erreur: 'Erreur serveur' });
   }
 });
 
-// POST /depots — crée un dépôt
+// POST /depots — enregistre un dépôt
 router.post('/', async (req, res) => {
-  const { libelle, poids_kg, etat_arrivee, categorie_id, depot_id } = req.body;
+  const { personne_id, date_depot, type } = req.body;
 
-  if (!libelle || !poids_kg || !etat_arrivee || !categorie_id || !depot_id) {
+  if (!personne_id || !date_depot || !type) {
     return res.status(400).json({
-      erreur: 'libelle, poids_kg, etat_arrivee, categorie_id et depot_id sont requis',
+      erreur: 'personne_id, date_depot et type sont requis',
     });
+  }
+
+  const typesValides = ['boutique', 'domicile'];
+  if (!typesValides.includes(type)) {
+    return res.status(400).json({ erreur: 'type invalide' });
   }
 
   try {
     const result = await pool.query(
-      `INSERT INTO depots (libelle, poids_kg, etat_arrivee, categorie_id, depot_id)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO depot (personne_id, date_depot, type)
+       VALUES ($1, $2, $3)
        RETURNING *`,
-      [libelle, poids_kg, etat_arrivee, categorie_id, depot_id]
+      [personne_id, date_depot, type]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -52,37 +74,33 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /depots/:id — modifie un dépôt existant
-router.put('/:id', async (req, res) => {
-  const { libelle, poids_kg, etat_arrivee, statut, prix, date_mise_rayon } = req.body;
+// POST /depots/:id/objets — ajoute un objet à un dépôt existant
+router.post('/:id/objets', async (req, res) => {
+  const { libelle, poids_kg, etat_arrivee, categorie_id } = req.body;
+
+  if (!libelle || !poids_kg || !etat_arrivee || !categorie_id) {
+    return res.status(400).json({
+      erreur: 'libelle, poids_kg, etat_arrivee et categorie_id sont requis',
+    });
+  }
+
+  const etatsValides = ['bon_etat', 'a_reparer', 'hors_service'];
+  if (!etatsValides.includes(etat_arrivee)) {
+    return res.status(400).json({ erreur: 'etat_arrivee invalide' });
+  }
+
+  if (isNaN(Number(poids_kg))) {
+    return res.status(400).json({ erreur: 'poids_kg doit être un nombre' });
+  }
 
   try {
     const result = await pool.query(
-      `UPDATE depots
-       SET libelle = $1, poids_kg = $2, etat_arrivee = $3,
-           statut = $4, prix = $5, date_mise_rayon = $6
-       WHERE id = $7
+      `INSERT INTO objet (libelle, poids_kg, etat_arrivee, categorie_id, depot_id)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [libelle, poids_kg, etat_arrivee, statut, prix, date_mise_rayon, req.params.id]
+      [libelle, poids_kg, etat_arrivee, categorie_id, req.params.id]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ erreur: 'Dépôt introuvable' });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ erreur: 'Erreur serveur' });
-  }
-});
-
-// DELETE /depots/:id — supprime un dépôt
-router.delete('/:id', async (req, res) => {
-  try {
-    const result = await pool.query('DELETE FROM depots WHERE id = $1 RETURNING *', [req.params.id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ erreur: 'Dépôt introuvable' });
-    }
-    res.status(204).send();
+    res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ erreur: 'Erreur serveur' });
